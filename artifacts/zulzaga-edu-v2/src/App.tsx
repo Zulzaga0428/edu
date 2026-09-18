@@ -306,10 +306,21 @@ function TeacherDashboard() {
         <div><span>Идэвхтэй анги</span><strong>3А анги</strong><p>24 сурагч · 2 шинэ илгээлт</p></div>
         <span className="teacher-summary-icon"><Users size={23} /></span>
       </div>
+      <div className="teacher-pulse" aria-label="Өнөөдрийн ангийн байдал">
+        <div><strong>21</strong><span>Ирсэн</span></div>
+        <div><strong>18</strong><span>Даалгавартай</span></div>
+        <div><strong>3</strong><span>Анхаарах</span></div>
+      </div>
+      <div className="section-heading section-heading-spaced"><h3>Анхаарах зүйл</h3><span>Өнөөдөр</span></div>
+      <button className="student-attention">
+        <span className="attention-avatar">Т</span>
+        <div><strong>Тэмүүлэнг дэмжих</strong><p>Монгол хэлний 2 даалгавар хоцорсон байна.</p></div>
+        <ChevronRight size={18} />
+      </button>
       <div className="section-heading section-heading-spaced"><h3>Өнөөдрийн ажлууд</h3><span>Бүгдийг харах</span></div>
       <div className="teacher-task"><span className="task-icon task-blue"><NotebookPen size={20} /></span><div><strong>Даалгавар шалгах</strong><p>8 сурагч илгээсэн байна</p></div><span className="count-badge">8</span></div>
       <div className="teacher-task"><span className="task-icon task-yellow"><MessageCircle size={20} /></span><div><strong>Шинэ мессеж</strong><p>Эцэг эхээс 2 шинэ асуулт</p></div><span className="count-badge">2</span></div>
-      <div className="section-heading section-heading-spaced"><h3>Ангидаа өгөх оноо</h3></div>
+      <div className="section-heading section-heading-spaced"><h3>Ангийн урамшуулал</h3></div>
       <div className="points-card"><WalletCards size={22} /><div><strong>1,240 оноо</strong><p>Энэ сард ашиглах боломжтой</p></div><ArrowRight size={17} /></div>
     </div>
   );
