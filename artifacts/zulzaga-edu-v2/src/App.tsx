@@ -1,243 +1,301 @@
-import { useState } from 'react';
-import { ArrowDown, ArrowRight, BookOpen, Check, ChevronDown, CircleUserRound, Clock3, GraduationCap, HeartHandshake, Menu, MessageCircle, NotebookPen, Sparkles, UsersRound, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  CalendarDays,
+  CheckCircle2,
+  ChevronRight,
+  GraduationCap,
+  Heart,
+  LayoutDashboard,
+  MessageCircle,
+  NotebookPen,
+  Sparkles,
+  Users,
+  WalletCards,
+} from 'lucide-react';
 
-type Role = 'parent' | 'teacher' | 'school';
+type Role = 'student' | 'parent' | 'teacher';
+type Screen = 'splash' | 'roles' | 'login' | 'dashboard';
 
-const roleContent: Record<Role, {
+const roles: Array<{
+  id: Role;
   label: string;
-  title: string;
-  body: string;
-  quote: string;
-  features: { icon: typeof BookOpen; title: string; body: string }[];
-}> = {
-  parent: {
+  description: string;
+  icon: typeof GraduationCap;
+}> = [
+  {
+    id: 'student',
+    label: 'Сурагч',
+    description: 'Хичээлээ сонирхолтойгоор хийж, ахицаа харах',
+    icon: GraduationCap,
+  },
+  {
+    id: 'parent',
     label: 'Эцэг эх',
-    title: 'Хүүхдийнхээ ахиц дэвшлийг ойроос мэдэрнэ.',
-    body: 'Өдөр бүр юу сурч, юунд баярлаж, хаана дэмжлэг хэрэгтэйг нь ойлгох жижигхэн дохиог нэг дороос хараарай.',
-    quote: '“Хяналт биш, хамтдаа өнгөрүүлэх илүү олон мөч.”',
-    features: [
-      { icon: HeartHandshake, title: 'Тодорхой ахиц', body: 'Хичээл бүрийн явцыг ойлгоход амархан тоймоор.' },
-      { icon: MessageCircle, title: 'Зөв цагт нь холбоо', body: 'Багшийн тэмдэглэл, санал хүсэлтийг цаг алдалгүй.' },
-      { icon: Clock3, title: 'Өглөөг илүү амар', body: 'Долоо хоногийн хуваарь, сануулга нэг дор.' },
-    ],
+    description: 'Хүүхдийнхээ сурах замыг ойлгож дэмжих',
+    icon: Heart,
+  },
+  {
+    id: 'teacher',
+    label: 'Багш',
+    description: 'Ангиа цэгцтэй удирдаж, хүүхэд бүрт хүрэх',
+    icon: NotebookPen,
+  },
+];
+
+const roleCopy: Record<
+  Role,
+  {
+    greeting: string;
+    title: string;
+    subtitle: string;
+    accent: string;
+  }
+> = {
+  student: {
+    greeting: 'Сайн уу, Номин',
+    title: 'Өнөөдөр сурах зүйлс',
+    subtitle: 'Жижиг алхам бүр чинь ахиц юм.',
+    accent: 'Сурагчийн орон зай',
+  },
+  parent: {
+    greeting: 'Сайн уу, Номин',
+    title: 'Хүүхдийн тань өнөөдөр',
+    subtitle: 'Ойрхон байж, зөв цагт нь дэмжицгээе.',
+    accent: 'Эцэг эхийн орон зай',
   },
   teacher: {
-    label: 'Багш',
-    title: 'Заах цагтаа илүү ихийг заана.',
-    body: 'Давтагддаг ажлуудыг цэгцэлж, хүүхэд бүрийн сурах хэмнэлд анхаарах цагийг тань буцааж өгнө.',
-    quote: '“Бага цаас, их ажиглалт. Их ажиглалт, илүү сайн дэмжлэг.”',
-    features: [
-      { icon: NotebookPen, title: 'Төлөвлөлт хурууны үзүүрт', body: 'Хичээлийн бэлтгэл, даалгавар, тэмдэглэл эмх цэгцтэй.' },
-      { icon: UsersRound, title: 'Хүүхэд бүр харагдана', body: 'Нэг бүрийн суралцах замнал, жижиг амжилтыг анзаарна.' },
-      { icon: Sparkles, title: 'Ажлын өдрийн хөнгөвчлөл', body: 'Тайлан, сануулга, холбоог нэг хялбар урсгалд.' },
-    ],
-  },
-  school: {
-    label: 'Сургууль',
-    title: 'Нэг зорилгын төлөө нэг хэмнэлээр.',
-    body: 'Сургуулийн хамтын соёлыг мэдээллээр бус, ойлголцлоор холбож, сурах орчныг бүхэлд нь дэмжинэ.',
-    quote: '“Хүүхдийн төлөө ажилладаг хүн бүр нэг хуудсанд.”',
-    features: [
-      { icon: GraduationCap, title: 'Нэгдсэн харах өнцөг', body: 'Анги, багш, гэр бүлийн мэдээллийг уялдуулна.' },
-      { icon: BookOpen, title: 'Суралцах чанарын хэмнэл', body: 'Өдөр тутмын ажлаас урт хугацааны ахицыг олж харна.' },
-      { icon: UsersRound, title: 'Итгэл дээрх хамтын ажиллагаа', body: 'Мэдээлэл илүү цэгцтэй, шийдвэр илүү бодитой.' },
-    ],
+    greeting: 'Сайн байна уу, багш аа',
+    title: 'Ангидаа тавтай морил',
+    subtitle: 'Хүүхэд бүрийн жижиг ахицыг хамтдаа анзааръя.',
+    accent: 'Багшийн орон зай',
   },
 };
 
-const faqs = [
-  ['Zulzaga EDU-г хэн ашиглах вэ?', '1–5 дугаар ангийн хүүхэдтэй гэр бүл, ангийн багш болон сургуулийн удирдлагад зориулсан. Хүн бүр өөрт хэрэгтэй өнцгөөсөө нэг орон зайг харна.'],
-  ['Одоо бүртгүүлж ашиглаж болох уу?', 'Энэ танилцуулга нь Zulzaga EDU V2-ийн эхний хувилбар. Бид сургуулиудтай хамтран туршиж, хүүхэд бүрт илүү сайн болгохоор бэлтгэж байна.'],
-  ['Миний хүүхдийн мэдээлэл хэрхэн хамгаалагдах вэ?', 'Аюулгүй, хүндэтгэлтэй орчин бол бидний эхний зарчим. Хувийн мэдээллийн хамгаалалтыг бүтээгдэхүүний суурь хэсэг болгон төлөвлөж байна.'],
-  ['Багш нарт ямар өөрчлөлт авчрах вэ?', 'Давтагддаг төлөвлөлт, тэмдэглэл, холбооны ажлыг эмхэлж, багш хүүхэд бүртэй ажиллахад илүү их цаг зарцуулахад тусална.'],
-];
-
-function scrollToId(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+function Brand({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className={`app-brand ${compact ? 'app-brand-compact' : ''}`}>
+      <span className="brand-mark">
+        <Sparkles size={compact ? 16 : 19} strokeWidth={2.4} />
+      </span>
+      <span className="brand-text">
+        <strong>zulzaga</strong>
+        {!compact && <small>EDU · хамтдаа өснө</small>}
+      </span>
+    </div>
+  );
 }
 
 function App() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [role, setRole] = useState<Role>('parent');
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [sent, setSent] = useState(false);
-  const content = roleContent[role];
+  const [screen, setScreen] = useState<Screen>('splash');
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
 
-  const closeMenu = () => setMenuOpen(false);
-  const navigate = (id: string) => {
-    closeMenu();
-    scrollToId(id);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setScreen('roles'), 1500);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const chooseRole = (role: Role) => {
+    setSelectedRole(role);
+    setScreen('login');
   };
 
-  return (
-    <main className="z-page">
-      <div className="z-topline">2025 ОНЫ НАМРЫН ТУРШИЛТЫН ХӨТӨЛБӨРТ СУРГУУЛИУДЫГ УРЬЖ БАЙНА <ArrowRight size={13} /></div>
-      <header className="z-nav">
-        <div className="z-container z-nav-inner">
-          <button className="z-brand" onClick={() => navigate('top')} data-testid="button-brand-home" aria-label="Эхлэл рүү очих">
-            <span className="z-mark"><Sparkles size={19} strokeWidth={2.5} /></span>
-            <span><span className="z-brand-name">zulzaga</span><span className="z-brand-sub">EDU · хамтдаа өснө</span></span>
-          </button>
-          <nav className={`z-nav-links ${menuOpen ? 'z-mobile-open' : ''}`} aria-label="Үндсэн цэс">
-            <button className="z-nav-link" onClick={() => navigate('why')} data-testid="link-why">Яагаад Zulzaga?</button>
-            <button className="z-nav-link" onClick={() => navigate('journey')} data-testid="link-journey">Хэрхэн ажилладаг вэ?</button>
-            <button className="z-nav-link" onClick={() => navigate('faq')} data-testid="link-faq">Түгээмэл асуулт</button>
-          </nav>
-          <div className="z-nav-actions">
-            <button className="z-link-button" onClick={() => setModalOpen(true)} data-testid="button-sign-in">Танилцуулга авах</button>
-            <button className="z-solid-button" onClick={() => navigate('contact')} data-testid="button-nav-contact">Холбогдох <ArrowRight size={14} /></button>
-            <button className="z-menu-toggle" onClick={() => setMenuOpen(!menuOpen)} data-testid="button-mobile-menu" aria-label="Цэс нээх">{menuOpen ? <X size={22} /> : <Menu size={22} />}</button>
+  if (screen === 'splash') {
+    return (
+      <main className="mobile-app app-splash">
+        <div className="splash-orbit splash-orbit-one" />
+        <div className="splash-orbit splash-orbit-two" />
+        <div className="splash-content">
+          <div className="splash-art" aria-label="Zulzaga EDU">
+            <div className="splash-art-sun" />
+            <div className="splash-art-hill" />
+            <div className="splash-art-book">
+              <BookOpen size={52} strokeWidth={1.35} />
+            </div>
+            <span className="splash-art-star star-one"><Sparkles size={20} /></span>
+            <span className="splash-art-star star-two"><Sparkles size={15} /></span>
           </div>
+          <Brand />
+          <p className="splash-tagline">Хүүхэд бүрийн сурах замд<br />хамтдаа өснө.</p>
+          <div className="loading-line" aria-label="Уншиж байна"><span /></div>
+        </div>
+        <button className="skip-button" onClick={() => setScreen('roles')}>Алгасах</button>
+      </main>
+    );
+  }
+
+  if (screen === 'roles') {
+    return (
+      <main className="mobile-app app-roles">
+        <div className="app-topbar">
+          <Brand compact />
+          <span className="step-label">Алхам 1 / 2</span>
+        </div>
+        <div className="step-progress"><span /></div>
+        <section className="roles-intro">
+          <span className="eyebrow">Тавтай морил</span>
+          <h1>Та хэнээр<br /><em>нэвтрэх вэ?</em></h1>
+          <p>Өөрт тохирох орон зайгаа сонгоод үргэлжлүүлээрэй.</p>
+        </section>
+        <div className="role-list" aria-label="Хэрэглэгчийн төрөл сонгох">
+          {roles.map(({ id, label, description, icon: Icon }) => (
+            <button
+              key={id}
+              className={`role-card role-${id}`}
+              onClick={() => chooseRole(id)}
+              data-testid={`button-role-${id}`}
+            >
+              <span className="role-card-icon"><Icon size={25} strokeWidth={1.8} /></span>
+              <span className="role-card-copy">
+                <strong>{label}</strong>
+                <small>{description}</small>
+              </span>
+              <ChevronRight className="role-card-arrow" size={20} />
+            </button>
+          ))}
+        </div>
+        <p className="safe-note"><CheckCircle2 size={15} /> Таны мэдээлэл аюулгүй хадгалагдана</p>
+      </main>
+    );
+  }
+
+  if (screen === 'login' && selectedRole) {
+    const role = roles.find((item) => item.id === selectedRole)!;
+    const Icon = role.icon;
+    return (
+      <main className="mobile-app app-login">
+        <div className="app-topbar">
+          <button className="icon-button" onClick={() => setScreen('roles')} aria-label="Буцах">
+            <ArrowLeft size={20} />
+          </button>
+          <Brand compact />
+          <span className="step-label">Алхам 2 / 2</span>
+        </div>
+        <div className="step-progress"><span className="progress-complete" /></div>
+        <section className="login-panel">
+          <div className={`login-role-icon login-${selectedRole}`}><Icon size={28} strokeWidth={1.7} /></div>
+          <span className="eyebrow">{role.label} · {role.id === 'teacher' ? 'ажлын орон зай' : 'суралцах орон зай'}</span>
+          <h1>Тавтай морил,<br /><em>{role.label} аа.</em></h1>
+          <p>Өөрийн орон зайдаа орохын тулд нэвтэрнэ үү.</p>
+          <div className="login-placeholder">
+            <Sparkles size={17} />
+            <span>Нэвтрэх үйлдлийг дараагийн алхамд холбоно.</span>
+          </div>
+          <button className="demo-button" onClick={() => setScreen('dashboard')} data-testid="button-demo-login">
+            Demo орчноор үргэлжлүүлэх <ArrowRight size={17} />
+          </button>
+          <div className="future-login-options" aria-label="Ирээдүйн нэвтрэх сонголтууд">
+            <span>Дараа нь сонгох боломжтой</span>
+            <div><span>Google</span><span>Утас</span><span>Apple</span></div>
+          </div>
+        </section>
+        <p className="login-footer">Zulzaga EDU · Хамтдаа өснө</p>
+      </main>
+    );
+  }
+
+  return <Dashboard role={selectedRole ?? 'student'} onBack={() => setScreen('roles')} />;
+}
+
+function Dashboard({ role, onBack }: { role: Role; onBack: () => void }) {
+  const copy = roleCopy[role];
+  return (
+    <main className="mobile-app app-dashboard">
+      <header className="dashboard-header">
+        <div className="dashboard-brand-row">
+          <Brand compact />
+          <button className="avatar-button" onClick={onBack} aria-label="Role сонголт руу буцах">Н</button>
+        </div>
+        <div className="dashboard-greeting">
+          <span className="eyebrow">{copy.accent}</span>
+          <h1>{copy.greeting}</h1>
+          <p>{copy.subtitle}</p>
         </div>
       </header>
 
-      <section className="z-hero" id="top">
-        <div className="z-container z-hero-grid">
-          <div className="z-hero-copy">
-            <div className="z-eyebrow z-appear">Хүүхэд бүрийн сурах зам</div>
-            <h1 className="z-appear z-delay-1">Өнөөдрийн жижиг алхам, <em>маргаашийн том итгэл.</em></h1>
-            <p className="z-hero-lede z-appear z-delay-2">Zulzaga EDU бол 1–5 дугаар ангийн хүүхэд, эцэг эх, багшийг нэг зорилгын төлөө зөөлөн холбох суралцах орчин.</p>
-            <div className="z-hero-actions z-appear z-delay-3">
-              <button className="z-solid-button" onClick={() => navigate('why')} data-testid="button-hero-explore">Zulzaga-г танилцъя <ArrowDown size={15} /></button>
-              <button className="z-outline-button" onClick={() => setModalOpen(true)} data-testid="button-hero-demo">Сонирхож байна <CircleUserRound size={15} /></button>
-            </div>
-            <div className="z-proof-line z-appear z-delay-3">
-              <span className="z-proof-dots"><span className="z-proof-dot">А</span><span className="z-proof-dot">Н</span><span className="z-proof-dot">Т</span><span className="z-proof-dot">С</span></span>
-              <span>Суралцах замд хамт алхах<br />гэр бүл, багш нарын орон зай</span>
-            </div>
-          </div>
-          <div className="z-hero-art" aria-label="Хүүхэд ном уншиж буй дулаан дүрслэл" role="img">
-            <div className="z-art-glow" />
-            <div className="z-art-paper"><div className="z-sun" /><div className="z-hill-back" /><div className="z-hill" /><div className="z-student" /><div className="z-book" /></div>
-            <div className="z-float-tag">ӨНӨӨДӨР БИ<br />ЧАДЛАА.</div>
-            <div className="z-note"><div className="z-note-label">багшийн тэмдэглэл</div><div className="z-note-text">Чи асуултаа маш зоригтой асуусан шүү.</div><div className="z-note-line" /></div>
-            <div className="z-float-star"><Sparkles size={32} strokeWidth={1.8} /></div>
-          </div>
+      <section className={`dashboard-highlight highlight-${role}`}>
+        <div>
+          <span className="highlight-kicker">{role === 'teacher' ? 'ЭНЭ ДОЛОО ХОНОГТ' : 'ӨНӨӨДӨР'}</span>
+          <h2>{copy.title}</h2>
+          <button className="text-action">Дэлгэрэнгүй <ArrowRight size={14} /></button>
         </div>
-        <div className="z-scroll-cue">доош гүйлгэх<span /></div>
+        <span className="highlight-icon">
+          {role === 'student' ? <BookOpen size={25} /> : role === 'parent' ? <Heart size={25} /> : <Users size={25} />}
+        </span>
       </section>
 
-      <section className="z-stat-band" aria-label="Zulzaga EDU-ийн чиглэл">
-        <div className="z-container z-stat-grid">
-          <div className="z-stat"><strong>1–5</strong><span>ангийн сурагчдад</span></div>
-          <div className="z-stat"><strong>3</strong><span>тал нэг зорилготой</span></div>
-          <div className="z-stat"><strong>1</strong><span>холбогдсон орон зай</span></div>
-          <div className="z-stat"><strong>∞</strong><span>өсөх боломж</span></div>
-        </div>
-      </section>
+      {role === 'student' && <StudentDashboard />}
+      {role === 'parent' && <ParentDashboard />}
+      {role === 'teacher' && <TeacherDashboard />}
 
-      <section className="z-section z-section-cream" id="why">
-        <div className="z-container">
-          <div className="z-section-heading">
-            <div className="z-eyebrow">Нэг хүүхэд, гурван дэмжлэг</div>
-            <h2>Сурна гэдэг зөвхөн дүн биш.</h2>
-            <p>Хүүхэд өөртөө итгэх итгэлтэй болж, эцэг эх нь ойлгож дэмжиж, багш нь анхаарах цагтай байх тухай.</p>
-          </div>
-          <div className="z-role-switch" role="tablist" aria-label="Хэрэглэгчийн төрлөөр харах">
-            {(Object.keys(roleContent) as Role[]).map((item) => (
-              <button key={item} className={`z-role-tab ${role === item ? 'active' : ''}`} onClick={() => setRole(item)} role="tab" aria-selected={role === item} data-testid={`button-role-${item}`}>
-                <strong>{roleContent[item].label}</strong><small>{item === 'parent' ? 'Хүүхдийнхээ төлөө' : item === 'teacher' ? 'Ангидаа зориулахад' : 'Бүхэлд нь харахад'}</small>
-              </button>
-            ))}
-          </div>
-          <div className="z-role-content">
-            <div className="z-role-message">
-              <h3>{content.title}</h3>
-              <p>{content.body}</p>
-              <div className="z-role-quote">{content.quote}</div>
-            </div>
-            <div className="z-feature-list">
-              {content.features.map((feature, index) => {
-                const FeatureIcon = feature.icon;
-                return <div className="z-feature-item" key={feature.title} data-testid={`feature-${role}-${index}`}><span className="z-feature-icon"><FeatureIcon size={19} /></span><div><h4>{feature.title}</h4><p>{feature.body}</p></div></div>;
-              })}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="z-section" id="journey">
-        <div className="z-container z-journey">
-          <div className="z-journey-sticky">
-            <div className="z-eyebrow">Өсөх замыг нь харах</div>
-            <h2>Холбоо бүрдсэн үед сурах амьд болдог.</h2>
-            <p>Мэдээллийг цуглуулахын тулд биш, өдөр тутмын жижиг ахиц бүрийг утгатай болгохын тулд бид орон зайг бүтээж байна.</p>
-            <button className="z-solid-button" onClick={() => setModalOpen(true)} data-testid="button-journey-interest">Сургуулийнхаа талаар ярилцъя <ArrowRight size={14} /></button>
-          </div>
-          <div className="z-path">
-            <div className="z-path-step"><span className="z-path-number">01</span><h3>Өдөр эхлэхэд — чиглэл тодорхой</h3><p>Хүүхэд өнөөдөр юу сурах, юунд анхаарахаа ойлгож эхэлнэ. Багшийн бэлтгэл нэг дор, эцэг эхийн хүлээлт илүү бодитой.</p><span className="z-path-tag">Төлөвлөе</span></div>
-            <div className="z-path-step"><span className="z-path-number">02</span><h3>Өдөр үргэлжлэхэд — жижиг дохио</h3><p>Хичээлийн оролцоо, асуулт, оролдлого бүр сурах замын нэг хэсэг. Ахиц дандаа том тоогоор хэмжигдэх албагүй.</p><span className="z-path-tag">Анзааръя</span></div>
-            <div className="z-path-step"><span className="z-path-number">03</span><h3>Өдөр дуусахад — ойлголцол</h3><p>Товч, ойлгомжтой тойм гэр бүлийг хүүхдийнхээ сурах ертөнцтэй ойртуулна. Зөв асуулт, зөв цагт төрнө.</p><span className="z-path-tag">Хуваалцъя</span></div>
-            <div className="z-path-step"><span className="z-path-number">04</span><h3>Цаг хугацаа өнгөрөхөд — итгэл</h3><p>Жижиг амжилтууд хуримтлагдаж, хүүхэд өөрийнхөө хэр хол явснаа харах болно. Энэ бол урт замын хамгийн сайхан хэсэг.</p><span className="z-path-tag">Өсгөе</span></div>
-          </div>
-        </div>
-      </section>
-
-      <section className="z-section z-section-dark">
-        <div className="z-container">
-          <div className="z-section-heading">
-            <div className="z-eyebrow">Zulzaga EDU-ийн амлалт</div>
-            <h2>Хүүхэд бүр өөрийн хэмнэлтэй. Бид тэр хэмнэлийг сонсоно.</h2>
-            <p>Яаралгүй, харьцуулахгүй, хүүхдийг зөвхөн үр дүнгээр нь хязгаарлахгүй. Сурах хүсэл төрөхөд нь хэрэгтэй орчныг хамтдаа бүрдүүлнэ.</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="z-section z-testimonial-section">
-        <div className="z-container z-testimonial-grid">
-          <div className="z-testimonial-heading">
-            <div className="z-eyebrow">Яагаад эхэлсэн бэ?</div>
-            <h2>Сайн сурах орчин гэдэг сайн харилцаанаас эхэлдэг.</h2>
-            <p>Zulzaga-г бүтээхдээ бид эцэг эхийн санаа зовнил, багшийн завгүй өдөр, хүүхдийн зоригтой оролдлогыг зэрэг сонссон.</p>
-          </div>
-          <div className="z-testimonial-card">
-            <div className="z-testimonial-text">“Охин маань даалгавраа хийсэн эсэхээс илүү, өнөөдөр юуг ойлгосныг нь ярьдаг болсон.”</div>
-            <div className="z-testimonial-person"><div className="z-person-avatar">ОБ</div><div><div className="z-person-name">Оюунбилэгийн ээж</div><div className="z-person-role">2-р ангийн сурагчийн гэр бүл</div></div></div>
-          </div>
-        </div>
-      </section>
-
-      <section className="z-section" id="faq">
-        <div className="z-container z-faq-grid">
-          <div className="z-faq-heading">
-            <div className="z-eyebrow">Мэдэхийг хүссэн зүйл</div>
-            <h2>Асуух нь эхлэхийн нэг хэлбэр.</h2>
-            <p>Энд хариултаа олохгүй байвал бидэнд бичээрэй. Хамтдаа ярилцахад үргэлж бэлэн.</p>
-            <button className="z-outline-button" onClick={() => setModalOpen(true)} data-testid="button-faq-contact">Асуулт асуух <MessageCircle size={15} /></button>
-          </div>
-          <div className="z-faq-list">
-            {faqs.map(([question, answer], index) => {
-              const isOpen = openFaq === index;
-              return <div className="z-faq-item" key={question}><button className={`z-faq-button ${isOpen ? 'open' : ''}`} onClick={() => setOpenFaq(isOpen ? null : index)} data-testid={`button-faq-${index}`} aria-expanded={isOpen}>{question}<ChevronDown size={18} /></button>{isOpen && <div className="z-faq-answer" data-testid={`text-faq-answer-${index}`}>{answer}</div>}</div>;
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="z-contact" id="contact">
-        <div className="z-container z-contact-box">
-          <div>
-            <div className="z-eyebrow">Хамт эхлүүлэх үү?</div>
-            <h2>Суралцах ирээдүйг хамтдаа дулаан болгоё.</h2>
-            <p>Танай гэр бүл, анги, сургуульд Zulzaga EDU хэрхэн тусалж болох талаар ярилцъя. Ямар ч урт танилцуулга, төвөгтэй амлалтгүй — эхлээд сонсоно.</p>
-          </div>
-          {sent ? <div className="z-success" data-testid="status-contact-success"><strong>Баярлалаа.</strong><br />Таны сонирхлыг хүлээж авлаа. Бид удахгүй холбогдох болно.</div> : <form className="z-contact-form" onSubmit={(event) => { event.preventDefault(); setSent(true); }}><label htmlFor="contact-name">Таны нэр</label><input id="contact-name" required placeholder="Жишээ нь: Номин" data-testid="input-contact-name" /><label htmlFor="contact-email">Имэйл хаяг</label><input id="contact-email" type="email" required placeholder="hello@example.mn" data-testid="input-contact-email" /><label htmlFor="contact-message">Та юу сонирхож байна вэ?</label><textarea id="contact-message" placeholder="Гэр бүл, анги эсвэл сургуулийнхаа талаар бичээрэй." data-testid="input-contact-message" /><button className="z-solid-button" type="submit" data-testid="button-contact-submit">Илгээх <ArrowRight size={14} /></button></form>}
-        </div>
-      </section>
-
-      <footer className="z-footer">
-        <div className="z-container">
-          <div className="z-footer-top">
-            <div><button className="z-brand" onClick={() => navigate('top')} data-testid="button-footer-brand"><span className="z-mark"><Sparkles size={19} /></span><span><span className="z-brand-name">zulzaga</span><span className="z-brand-sub">EDU · хамтдаа өснө</span></span></button><p className="z-footer-about">Хүүхэд бүр өөрийн хэмнэлээр, өөртөө итгэлтэй сурахыг дэмжинэ.</p></div>
-            <div className="z-footer-links"><div><h4>Танилцах</h4><a href="#why" data-testid="link-footer-why">Яагаад Zulzaga?</a><a href="#journey" data-testid="link-footer-journey">Хэрхэн ажилладаг вэ?</a></div><div><h4>Холбоо</h4><a href="mailto:hello@zulzaga.mn" data-testid="link-footer-email">hello@zulzaga.mn</a><a href="#contact" data-testid="link-footer-contact">Бидэнтэй ярилцах</a></div></div>
-          </div>
-          <div className="z-footer-bottom"><span>© 2025 Zulzaga EDU. Сайн сурах орчин хамтдаа.</span><span>Хүүхэд бүрийн талд.</span></div>
-        </div>
-      </footer>
-
-      {modalOpen && <div className="z-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalOpen(false); }}><div className="z-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div className="z-modal-top"><h3 id="modal-title">Zulzaga-г илүү ойроос танилцъя.</h3><button className="z-close" onClick={() => setModalOpen(false)} data-testid="button-close-modal" aria-label="Цонх хаах"><X size={17} /></button></div><p>Имэйлээ үлдээгээрэй. Бид V2 туршилтын хөтөлбөр, шинэ мэдээг хамгийн түрүүнд хуваалцана.</p><form className="z-contact-form" onSubmit={(event) => { event.preventDefault(); setModalOpen(false); setSent(true); scrollToId('contact'); }}><label htmlFor="modal-email">Имэйл хаяг</label><input id="modal-email" type="email" required placeholder="таны@имэйл.mn" data-testid="input-modal-email" /><button className="z-solid-button" type="submit" data-testid="button-modal-submit">Мэдээлэл авах <ArrowRight size={14} /></button></form></div></div>}
+      <nav className="bottom-nav" aria-label="Үндсэн цэс">
+        <button className="active"><LayoutDashboard size={19} /><span>Эхлэл</span></button>
+        <button><BookOpen size={19} /><span>{role === 'teacher' ? 'Анги' : 'Хичээл'}</span></button>
+        <button><CalendarDays size={19} /><span>Хуваарь</span></button>
+        <button><MessageCircle size={19} /><span>Холбоо</span></button>
+      </nav>
     </main>
+  );
+}
+
+function StudentDashboard() {
+  return (
+    <div className="dashboard-content">
+      <div className="section-heading"><h3>Дараагийн хийх зүйл</h3><span>2 үлдлээ</span></div>
+      <div className="task-card task-card-main">
+        <span className="task-icon task-blue"><BookOpen size={21} /></span>
+        <div><strong>Монгол хэл</strong><p>Өгүүлбэрийн бүтэц · 20 минут</p></div>
+        <ChevronRight size={18} />
+      </div>
+      <div className="task-card">
+        <span className="task-icon task-yellow"><NotebookPen size={20} /></span>
+        <div><strong>Зургийн даалгавар</strong><p>Маргааш өгөх</p></div>
+        <ChevronRight size={18} />
+      </div>
+      <div className="section-heading section-heading-spaced"><h3>Миний ахиц</h3><span>Энэ 7 хоног</span></div>
+      <div className="progress-card">
+        <div className="progress-ring"><span>78<small>%</small></span></div>
+        <div><strong>Сайн явж байна!</strong><p>Өнгөрсөн долоо хоногоос 12% илүү.</p></div>
+      </div>
+    </div>
+  );
+}
+
+function ParentDashboard() {
+  return (
+    <div className="dashboard-content">
+      <div className="child-card">
+        <div className="child-avatar">Н</div>
+        <div><span>Хүүхдийн мэдээлэл</span><strong>Номин · 3А анги</strong><p>Өнөөдөр 2 даалгавартай</p></div>
+        <ChevronRight size={18} />
+      </div>
+      <div className="section-heading section-heading-spaced"><h3>Сүүлийн ахиц</h3><span>Бүгдийг харах</span></div>
+      <div className="parent-metrics">
+        <div><span className="metric-icon metric-green"><CheckCircle2 size={18} /></span><strong>86%</strong><small>Даалгавар</small></div>
+        <div><span className="metric-icon metric-orange"><Sparkles size={18} /></span><strong>240</strong><small>Оноо</small></div>
+        <div><span className="metric-icon metric-purple"><Heart size={18} /></span><strong>4.8</strong><small>Идэвх</small></div>
+      </div>
+      <div className="section-heading section-heading-spaced"><h3>Багшийн тэмдэглэл</h3></div>
+      <div className="note-card"><span className="note-quote">“</span><p>Номин өнөөдөр асуултаа маш зоригтой асуусан.</p><small>Багш Болормаа · Өнөөдөр</small></div>
+    </div>
+  );
+}
+
+function TeacherDashboard() {
+  return (
+    <div className="dashboard-content">
+      <div className="teacher-summary">
+        <div><span>Идэвхтэй анги</span><strong>3А анги</strong><p>24 сурагч · 2 шинэ илгээлт</p></div>
+        <span className="teacher-summary-icon"><Users size={23} /></span>
+      </div>
+      <div className="section-heading section-heading-spaced"><h3>Өнөөдрийн ажлууд</h3><span>Бүгдийг харах</span></div>
+      <div className="teacher-task"><span className="task-icon task-blue"><NotebookPen size={20} /></span><div><strong>Даалгавар шалгах</strong><p>8 сурагч илгээсэн байна</p></div><span className="count-badge">8</span></div>
+      <div className="teacher-task"><span className="task-icon task-yellow"><MessageCircle size={20} /></span><div><strong>Шинэ мессеж</strong><p>Эцэг эхээс 2 шинэ асуулт</p></div><span className="count-badge">2</span></div>
+      <div className="section-heading section-heading-spaced"><h3>Ангидаа өгөх оноо</h3></div>
+      <div className="points-card"><WalletCards size={22} /><div><strong>1,240 оноо</strong><p>Энэ сард ашиглах боломжтой</p></div><ArrowRight size={17} /></div>
+    </div>
   );
 }
 
