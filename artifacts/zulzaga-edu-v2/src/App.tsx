@@ -258,18 +258,59 @@ function Dashboard({ role, onBack }: { role: Role; onBack: () => void }) {
 
 function StudentDashboard() {
   const learningSteps = [
-    { id: 'mongolian', subject: 'Монгол хэл', detail: 'Өгүүлбэрийн бүтэц · 20 минут', tone: 'task-blue' },
-    { id: 'math', subject: 'Математик', detail: 'Үржих үйлдэл · 15 минут', tone: 'task-yellow' },
-    { id: 'art', subject: 'Зургийн даалгавар', detail: 'Маргааш өгөх', tone: 'task-purple' },
+    { id: 'mongolian', subject: 'Монгол хэл', detail: 'Өгүүлбэрийн бүтэц · 20 минут', tone: 'task-blue', goal: 'Өгүүлбэрийн эхлэл, гол санаа, төгсгөлийг ялгаж сурах.', instruction: 'Богино эхийг уншаад гол санааг илэрхийлсэн өгүүлбэрийг олоорой.' },
+    { id: 'math', subject: 'Математик', detail: 'Үржих үйлдэл · 15 минут', tone: 'task-yellow', goal: 'Нэг оронтой тоог үржүүлэх аргаа бататгах.', instruction: 'Жишээг ажиглаад дараагийн гурван бодлогыг өөрөө бодоорой.' },
+    { id: 'art', subject: 'Зургийн даалгавар', detail: 'Маргааш өгөх', tone: 'task-purple', goal: 'Өнгө ашиглан өөрийн санааг чөлөөтэй илэрхийлэх.', instruction: '“Миний дуртай улирал” сэдвээр жижиг зураг зураарай.' },
   ];
   const [completedSteps, setCompletedSteps] = useState<string[]>(['mongolian']);
+  const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
   const progress = Math.round((completedSteps.length / learningSteps.length) * 100);
+  const selectedStep = learningSteps.find((step) => step.id === selectedStepId);
 
   const toggleStep = (id: string) => {
     setCompletedSteps((current) =>
       current.includes(id) ? current.filter((step) => step !== id) : [...current, id],
     );
   };
+
+  if (selectedStep) {
+    const isDone = completedSteps.includes(selectedStep.id);
+    return (
+      <div className="dashboard-content student-lesson-view">
+        <button className="lesson-back" onClick={() => setSelectedStepId(null)}>
+          <ArrowLeft size={17} /> Өнөөдрийн ажлууд
+        </button>
+        <section className={`lesson-detail-card ${selectedStep.tone}`}>
+          <span className="lesson-subject">Хичээл</span>
+          <h3>{selectedStep.subject}</h3>
+          <p>{selectedStep.detail}</p>
+        </section>
+        <section className="lesson-block">
+          <span className="lesson-block-number">1</span>
+          <div><small>ӨНӨӨДРИЙН ЗОРИЛГО</small><p>{selectedStep.goal}</p></div>
+        </section>
+        <section className="lesson-block">
+          <span className="lesson-block-number">2</span>
+          <div><small>ХИЙХ АЛХАМ</small><p>{selectedStep.instruction}</p></div>
+        </section>
+        <div className="lesson-practice">
+          <span>Жижиг дасгал</span>
+          <strong>{selectedStep.id === 'mongolian' ? 'Гол санааг олъё' : selectedStep.id === 'math' ? '3 бодлого бодъё' : 'Зургаа эхлүүлье'}</strong>
+          <p>Дараагийн хөгжүүлэлтээр дасгалын асуулт, хариултыг энд оруулна.</p>
+        </div>
+        <button
+          className={`lesson-complete-button ${isDone ? 'is-done' : ''}`}
+          onClick={() => {
+            if (!isDone) toggleStep(selectedStep.id);
+            setSelectedStepId(null);
+          }}
+        >
+          {isDone ? <CheckCircle2 size={18} /> : <Sparkles size={18} />}
+          {isDone ? 'Өнөөдөр дууссан' : 'Дууссан гэж тэмдэглэх'}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-content">
@@ -292,7 +333,7 @@ function StudentDashboard() {
             <button
               key={step.id}
               className={`student-step ${isDone ? 'is-complete' : ''}`}
-              onClick={() => toggleStep(step.id)}
+              onClick={() => setSelectedStepId(step.id)}
               aria-pressed={isDone}
             >
               <span className={`task-icon ${step.tone}`}>
