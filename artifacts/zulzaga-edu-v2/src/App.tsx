@@ -23,7 +23,7 @@ const STUDENT_PROGRESS_KEY = 'zulzaga-edu-student-progress-v1';
 
 function loadStudentProgress() {
   if (typeof window === 'undefined') {
-    return { completedSteps: [] as string[], mongolianExerciseCorrect: false };
+    return { completedSteps: [] as string[], mongolianExerciseCorrect: false, mathExerciseCorrect: false };
   }
 
   try {
@@ -33,9 +33,10 @@ function loadStudentProgress() {
         ? saved.completedSteps.filter((id: unknown): id is string => typeof id === 'string')
         : [],
       mongolianExerciseCorrect: saved.mongolianExerciseCorrect === true,
+      mathExerciseCorrect: saved.mathExerciseCorrect === true,
     };
   } catch {
-    return { completedSteps: [] as string[], mongolianExerciseCorrect: false };
+    return { completedSteps: [] as string[], mongolianExerciseCorrect: false, mathExerciseCorrect: false };
   }
 }
 
@@ -288,6 +289,9 @@ function StudentDashboard() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [answerState, setAnswerState] = useState<'idle' | 'correct' | 'incorrect'>('idle');
   const [mongolianExerciseCorrect, setMongolianExerciseCorrect] = useState(savedProgress.mongolianExerciseCorrect);
+  const [selectedMathAnswer, setSelectedMathAnswer] = useState<number | null>(null);
+  const [mathAnswerState, setMathAnswerState] = useState<'idle' | 'correct' | 'incorrect'>('idle');
+  const [mathExerciseCorrect, setMathExerciseCorrect] = useState(savedProgress.mathExerciseCorrect);
   const progress = Math.round((completedSteps.length / learningSteps.length) * 100);
   const selectedStep = learningSteps.find((step) => step.id === selectedStepId);
   const mongolianAnswers = [
@@ -300,9 +304,9 @@ function StudentDashboard() {
   useEffect(() => {
     window.localStorage.setItem(
       STUDENT_PROGRESS_KEY,
-      JSON.stringify({ completedSteps, mongolianExerciseCorrect }),
+      JSON.stringify({ completedSteps, mongolianExerciseCorrect, mathExerciseCorrect }),
     );
-  }, [completedSteps, mongolianExerciseCorrect]);
+  }, [completedSteps, mongolianExerciseCorrect, mathExerciseCorrect]);
 
   const toggleStep = (id: string) => {
     setCompletedSteps((current) =>
@@ -314,6 +318,8 @@ function StudentDashboard() {
     setSelectedStepId(id);
     setSelectedAnswer(null);
     setAnswerState(id === 'mongolian' && mongolianExerciseCorrect ? 'correct' : 'idle');
+    setSelectedMathAnswer(null);
+    setMathAnswerState(id === 'math' && mathExerciseCorrect ? 'correct' : 'idle');
   };
 
   const checkAnswer = () => {
@@ -321,6 +327,13 @@ function StudentDashboard() {
     const isCorrect = selectedAnswer === correctAnswer;
     setAnswerState(isCorrect ? 'correct' : 'incorrect');
     if (isCorrect) setMongolianExerciseCorrect(true);
+  };
+
+  const checkMathAnswer = () => {
+    if (selectedMathAnswer === null) return;
+    const isCorrect = selectedMathAnswer === 24;
+    setMathAnswerState(isCorrect ? 'correct' : 'incorrect');
+    if (isCorrect) setMathExerciseCorrect(true);
   };
 
   if (selectedStep) {
@@ -395,14 +408,68 @@ function StudentDashboard() {
               </button>
             )}
           </section>
+        ) : selectedStep.id === 'math' ? (
+          <section className="lesson-practice exercise-card math-exercise-card">
+            <span>Жижиг дасгал</span>
+            <strong>Үржүүлэх аргаа ашиглая</strong>
+            <div className="math-question">
+              <small>6 ширхэг хайрцаг бүрд 4 харандаа байвал нийт хэдэн харандаа вэ?</small>
+              <b>6 × 4 = ?</b>
+            </div>
+            <fieldset className="answer-list math-answer-grid">
+              <legend>Зөв хариултыг сонгоорой</legend>
+              {[18, 24, 28].map((answer) => {
+                const isSelected = selectedMathAnswer === answer;
+                return (
+                  <label
+                    key={answer}
+                    className={`answer-option ${isSelected ? 'is-selected' : ''} ${mathAnswerState === 'correct' && isSelected ? 'is-correct' : ''} ${mathAnswerState === 'incorrect' && isSelected ? 'is-incorrect' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="math-answer"
+                      value={answer}
+                      checked={isSelected}
+                      onChange={() => {
+                        setSelectedMathAnswer(answer);
+                        setMathAnswerState('idle');
+                      }}
+                    />
+                    <b>{answer}</b>
+                  </label>
+                );
+              })}
+            </fieldset>
+            {(mathAnswerState === 'correct' || mathExerciseCorrect) && (
+              <div className="answer-feedback is-correct" role="status">
+                <CheckCircle2 size={18} />
+                <div><strong>Яг зөв, 24 харандаа!</strong><p>4-ийг 6 удаа нэмэхэд 24 болно.</p></div>
+              </div>
+            )}
+            {mathAnswerState === 'incorrect' && (
+              <div className="answer-feedback is-incorrect" role="status">
+                <Sparkles size={18} />
+                <div><strong>Дахин бодоод үзээрэй</strong><p>4 + 4 + 4 + 4 + 4 + 4 гэж нэмээд үзээрэй.</p></div>
+              </div>
+            )}
+            {mathAnswerState !== 'correct' && !mathExerciseCorrect && (
+              <button className="check-answer-button" onClick={checkMathAnswer} disabled={selectedMathAnswer === null}>
+                Хариултаа шалгах
+              </button>
+            )}
+          </section>
         ) : (
           <div className="lesson-practice">
             <span>Жижиг дасгал</span>
-            <strong>{selectedStep.id === 'math' ? '3 бодлого бодъё' : 'Зургаа эхлүүлье'}</strong>
+            <strong>Зургаа эхлүүлье</strong>
             <p>Дараагийн хөгжүүлэлтээр дасгалын асуулт, хариултыг энд оруулна.</p>
           </div>
         )}
-        {(selectedStep.id !== 'mongolian' || answerState === 'correct' || mongolianExerciseCorrect || isDone) && (
+        {(
+          (selectedStep.id === 'mongolian' && (answerState === 'correct' || mongolianExerciseCorrect || isDone))
+          || (selectedStep.id === 'math' && (mathAnswerState === 'correct' || mathExerciseCorrect || isDone))
+          || selectedStep.id === 'art'
+        ) && (
           <button
             className={`lesson-complete-button ${isDone ? 'is-done' : ''}`}
             onClick={() => {

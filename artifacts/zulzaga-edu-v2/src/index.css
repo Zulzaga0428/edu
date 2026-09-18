@@ -149,6 +149,15 @@ h1 { color: var(--ink); font-size: clamp(34px, 10vw, 47px); letter-spacing: -.06
 .answer-option.is-correct b { background: #65a98e; }
 .answer-option.is-incorrect { border-color: #dc8a68; background: #fff2ed; color: #a35437; }
 .answer-option.is-incorrect b { background: #dc8a68; }
+.math-exercise-card { background: #fff9e9; }
+.math-question { margin-top: 13px; padding: 15px; border-radius: 14px; background: #fff; border: 1px solid #ecdfb8; text-align: center; }
+.math-question small, .math-question b { display: block; }
+.math-question small { color: #7d704f; font-size: 10px; line-height: 1.55; }
+.math-question b { margin-top: 11px; color: #795d20; font-size: 25px; letter-spacing: .04em; }
+.math-answer-grid { grid-template-columns: repeat(3, 1fr); }
+.math-answer-grid legend { grid-column: 1 / -1; }
+.math-answer-grid .answer-option { justify-content: center; padding: 9px; }
+.math-answer-grid .answer-option b { width: 100%; background: transparent; color: inherit; font-size: 13px; }
 .answer-feedback { display: flex; align-items: flex-start; gap: 9px; margin-top: 13px; padding: 12px; border-radius: 13px; }
 .answer-feedback svg { flex: 0 0 auto; margin-top: 1px; }
 .answer-feedback strong { margin: 0; font-size: 11px; }
