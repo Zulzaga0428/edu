@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Zulzaga EDU V2"
+description = "A mobile-first education platform landing experience for primary school students, parents, and teachers, built around safe learning, connected classrooms, and progress that feels encouraging."
+version = "1.0.0"
+id = "artifacts/zulzaga-edu-v2"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 26224
+
+[services.development]
+run = "pnpm --filter @workspace/zulzaga-edu-v2 run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/zulzaga-edu-v2", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/zulzaga-edu-v2/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26224"
+BASE_PATH = "/"

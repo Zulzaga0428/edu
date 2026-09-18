@@ -1,0 +1,1 @@
+- [Zulzaga EDU product direction](zulzaga-edu-direction.md) — build PWA-first, defer provider-specific auth implementation, and keep location out of the current product scope.
