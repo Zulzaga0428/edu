@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -91,37 +91,35 @@ function Brand({ compact = false }: { compact?: boolean }) {
 function App() {
   const [screen, setScreen] = useState<Screen>('splash');
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setScreen('roles'), 1500);
-    return () => window.clearTimeout(timer);
-  }, []);
+  const [roleIndex, setRoleIndex] = useState(0);
+  const activeRole = roles[roleIndex];
 
   const chooseRole = (role: Role) => {
     setSelectedRole(role);
     setScreen('login');
   };
 
+  const moveRole = (direction: -1 | 1) => {
+    setRoleIndex((current) => (current + direction + roles.length) % roles.length);
+  };
+
   if (screen === 'splash') {
     return (
-      <main className="mobile-app app-splash">
-        <div className="splash-orbit splash-orbit-one" />
-        <div className="splash-orbit splash-orbit-two" />
-        <div className="splash-content">
-          <div className="splash-art" aria-label="Zulzaga EDU">
-            <div className="splash-art-sun" />
-            <div className="splash-art-hill" />
-            <div className="splash-art-book">
-              <BookOpen size={52} strokeWidth={1.35} />
-            </div>
-            <span className="splash-art-star star-one"><Sparkles size={20} /></span>
-            <span className="splash-art-star star-two"><Sparkles size={15} /></span>
-          </div>
-          <Brand />
-          <p className="splash-tagline">Хүүхэд бүрийн сурах замд<br />хамтдаа өснө.</p>
-          <div className="loading-line" aria-label="Уншиж байна"><span /></div>
-        </div>
-        <button className="skip-button" onClick={() => setScreen('roles')}>Алгасах</button>
+      <main className="mobile-app app-welcome">
+        <section className="welcome-content">
+          <span className="welcome-kicker">Суралцах шинэ орон зай</span>
+          <button
+            className="welcome-entry"
+            onClick={() => setScreen('roles')}
+            data-testid="button-open-zulzaga"
+          >
+            <span className="welcome-mark"><Sparkles size={27} strokeWidth={2.2} /></span>
+            <span className="welcome-name">Zulzaga EDU</span>
+            <span className="welcome-action">Нээх <ArrowRight size={16} /></span>
+          </button>
+          <p>Хүүхэд, эцэг эх, багшийг нэг зорилгын төлөө холбох орон зай.</p>
+        </section>
+        <span className="welcome-footer">Хамтдаа өснө</span>
       </main>
     );
   }
@@ -139,23 +137,41 @@ function App() {
           <h1>Та хэнээр<br /><em>нэвтрэх вэ?</em></h1>
           <p>Өөрт тохирох орон зайгаа сонгоод үргэлжлүүлээрэй.</p>
         </section>
-        <div className="role-list" aria-label="Хэрэглэгчийн төрөл сонгох">
-          {roles.map(({ id, label, description, icon: Icon }) => (
+        <div className="role-carousel" aria-label="Хэрэглэгчийн төрөл сонгох">
+          <button className="carousel-arrow" onClick={() => moveRole(-1)} aria-label="Өмнөх сонголт">
+            <ArrowLeft size={19} />
+          </button>
+          <div className={`single-role-card role-${activeRole.id}`}>
+            <span className="single-role-icon">
+              <activeRole.icon size={31} strokeWidth={1.7} />
+            </span>
+            <span className="single-role-copy">
+              <small>Нэвтрэх төрөл</small>
+              <strong>{activeRole.label}</strong>
+              <p>{activeRole.description}</p>
+            </span>
+          </div>
+          <button className="carousel-arrow" onClick={() => moveRole(1)} aria-label="Дараагийн сонголт">
+            <ArrowRight size={19} />
+          </button>
+        </div>
+        <div className="role-dots" aria-label={`${roleIndex + 1} дахь сонголт`}>
+          {roles.map((role, index) => (
             <button
-              key={id}
-              className={`role-card role-${id}`}
-              onClick={() => chooseRole(id)}
-              data-testid={`button-role-${id}`}
-            >
-              <span className="role-card-icon"><Icon size={25} strokeWidth={1.8} /></span>
-              <span className="role-card-copy">
-                <strong>{label}</strong>
-                <small>{description}</small>
-              </span>
-              <ChevronRight className="role-card-arrow" size={20} />
-            </button>
+              key={role.id}
+              className={index === roleIndex ? 'active' : ''}
+              onClick={() => setRoleIndex(index)}
+              aria-label={role.label}
+            />
           ))}
         </div>
+        <button
+          className="continue-button"
+          onClick={() => chooseRole(activeRole.id)}
+          data-testid={`button-role-${activeRole.id}`}
+        >
+          {activeRole.label}аар үргэлжлүүлэх <ArrowRight size={17} />
+        </button>
         <p className="safe-note"><CheckCircle2 size={15} /> Таны мэдээлэл аюулгүй хадгалагдана</p>
       </main>
     );
