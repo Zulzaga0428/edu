@@ -262,15 +262,34 @@ function StudentDashboard() {
     { id: 'math', subject: 'Математик', detail: 'Үржих үйлдэл · 15 минут', tone: 'task-yellow', goal: 'Нэг оронтой тоог үржүүлэх аргаа бататгах.', instruction: 'Жишээг ажиглаад дараагийн гурван бодлогыг өөрөө бодоорой.' },
     { id: 'art', subject: 'Зургийн даалгавар', detail: 'Маргааш өгөх', tone: 'task-purple', goal: 'Өнгө ашиглан өөрийн санааг чөлөөтэй илэрхийлэх.', instruction: '“Миний дуртай улирал” сэдвээр жижиг зураг зураарай.' },
   ];
-  const [completedSteps, setCompletedSteps] = useState<string[]>(['mongolian']);
+  const [completedSteps, setCompletedSteps] = useState<string[]>([]);
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [answerState, setAnswerState] = useState<'idle' | 'correct' | 'incorrect'>('idle');
   const progress = Math.round((completedSteps.length / learningSteps.length) * 100);
   const selectedStep = learningSteps.find((step) => step.id === selectedStepId);
+  const mongolianAnswers = [
+    'Номин өглөө эрт босов.',
+    'Тэр цүнхээ үүрээд сургуульдаа баяртайгаар явлаа.',
+    'Өнөөдөр тэнгэр цэлмэг байв.',
+  ];
+  const correctAnswer = mongolianAnswers[1];
 
   const toggleStep = (id: string) => {
     setCompletedSteps((current) =>
       current.includes(id) ? current.filter((step) => step !== id) : [...current, id],
     );
+  };
+
+  const openStep = (id: string) => {
+    setSelectedStepId(id);
+    setSelectedAnswer(null);
+    setAnswerState('idle');
+  };
+
+  const checkAnswer = () => {
+    if (!selectedAnswer) return;
+    setAnswerState(selectedAnswer === correctAnswer ? 'correct' : 'incorrect');
   };
 
   if (selectedStep) {
@@ -293,21 +312,77 @@ function StudentDashboard() {
           <span className="lesson-block-number">2</span>
           <div><small>ХИЙХ АЛХАМ</small><p>{selectedStep.instruction}</p></div>
         </section>
-        <div className="lesson-practice">
-          <span>Жижиг дасгал</span>
-          <strong>{selectedStep.id === 'mongolian' ? 'Гол санааг олъё' : selectedStep.id === 'math' ? '3 бодлого бодъё' : 'Зургаа эхлүүлье'}</strong>
-          <p>Дараагийн хөгжүүлэлтээр дасгалын асуулт, хариултыг энд оруулна.</p>
-        </div>
-        <button
-          className={`lesson-complete-button ${isDone ? 'is-done' : ''}`}
-          onClick={() => {
-            if (!isDone) toggleStep(selectedStep.id);
-            setSelectedStepId(null);
-          }}
-        >
-          {isDone ? <CheckCircle2 size={18} /> : <Sparkles size={18} />}
-          {isDone ? 'Өнөөдөр дууссан' : 'Дууссан гэж тэмдэглэх'}
-        </button>
+        {selectedStep.id === 'mongolian' ? (
+          <section className="lesson-practice exercise-card">
+            <span>Жижиг дасгал</span>
+            <strong>Гол санааг олъё</strong>
+            <p className="exercise-passage">Номин өглөө эрт босов. Тэр цүнхээ үүрээд сургуульдаа баяртайгаар явлаа. Өнөөдөр тэнгэр цэлмэг байв.</p>
+            <fieldset className="answer-list">
+              <legend>Эхийн гол санааг аль өгүүлбэр илэрхийлж байна вэ?</legend>
+              {mongolianAnswers.map((answer, index) => {
+                const isSelected = selectedAnswer === answer;
+                return (
+                  <label
+                    key={answer}
+                    className={`answer-option ${isSelected ? 'is-selected' : ''} ${answerState === 'correct' && isSelected ? 'is-correct' : ''} ${answerState === 'incorrect' && isSelected ? 'is-incorrect' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="mongolian-answer"
+                      value={answer}
+                      checked={isSelected}
+                      onChange={() => {
+                        setSelectedAnswer(answer);
+                        setAnswerState('idle');
+                      }}
+                    />
+                    <b>{index + 1}</b>
+                    <span>{answer}</span>
+                  </label>
+                );
+              })}
+            </fieldset>
+            {answerState === 'correct' && (
+              <div className="answer-feedback is-correct" role="status">
+                <CheckCircle2 size={18} />
+                <div><strong>Зөв хариуллаа!</strong><p>Номин сургуульдаа баяртайгаар явсан нь эхийн гол санаа юм.</p></div>
+              </div>
+            )}
+            {answerState === 'incorrect' && (
+              <div className="answer-feedback is-incorrect" role="status">
+                <Sparkles size={18} />
+                <div><strong>Дахин нэг оролдоорой</strong><p>Бүх эхэд юуны тухай өгүүлснийг бодоод өөр хариулт сонгоорой.</p></div>
+              </div>
+            )}
+            {answerState !== 'correct' && (
+              <button
+                className="check-answer-button"
+                onClick={checkAnswer}
+                disabled={!selectedAnswer}
+              >
+                Хариултаа шалгах
+              </button>
+            )}
+          </section>
+        ) : (
+          <div className="lesson-practice">
+            <span>Жижиг дасгал</span>
+            <strong>{selectedStep.id === 'math' ? '3 бодлого бодъё' : 'Зургаа эхлүүлье'}</strong>
+            <p>Дараагийн хөгжүүлэлтээр дасгалын асуулт, хариултыг энд оруулна.</p>
+          </div>
+        )}
+        {(selectedStep.id !== 'mongolian' || answerState === 'correct' || isDone) && (
+          <button
+            className={`lesson-complete-button ${isDone ? 'is-done' : ''}`}
+            onClick={() => {
+              if (!isDone) toggleStep(selectedStep.id);
+              setSelectedStepId(null);
+            }}
+          >
+            {isDone ? <CheckCircle2 size={18} /> : <Sparkles size={18} />}
+            {isDone ? 'Өнөөдөр дууссан' : 'Дууссан гэж тэмдэглэх'}
+          </button>
+        )}
       </div>
     );
   }
@@ -333,7 +408,7 @@ function StudentDashboard() {
             <button
               key={step.id}
               className={`student-step ${isDone ? 'is-complete' : ''}`}
-              onClick={() => setSelectedStepId(step.id)}
+              onClick={() => openStep(step.id)}
               aria-pressed={isDone}
             >
               <span className={`task-icon ${step.tone}`}>
