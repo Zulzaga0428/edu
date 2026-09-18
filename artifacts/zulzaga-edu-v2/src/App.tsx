@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,6 +18,26 @@ import {
 
 type Role = 'student' | 'parent' | 'teacher';
 type Screen = 'splash' | 'roles' | 'login' | 'dashboard';
+
+const STUDENT_PROGRESS_KEY = 'zulzaga-edu-student-progress-v1';
+
+function loadStudentProgress() {
+  if (typeof window === 'undefined') {
+    return { completedSteps: [] as string[], mongolianExerciseCorrect: false };
+  }
+
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(STUDENT_PROGRESS_KEY) ?? '{}');
+    return {
+      completedSteps: Array.isArray(saved.completedSteps)
+        ? saved.completedSteps.filter((id: unknown): id is string => typeof id === 'string')
+        : [],
+      mongolianExerciseCorrect: saved.mongolianExerciseCorrect === true,
+    };
+  } catch {
+    return { completedSteps: [] as string[], mongolianExerciseCorrect: false };
+  }
+}
 
 const roles: Array<{
   id: Role;
@@ -262,10 +282,12 @@ function StudentDashboard() {
     { id: 'math', subject: 'Математик', detail: 'Үржих үйлдэл · 15 минут', tone: 'task-yellow', goal: 'Нэг оронтой тоог үржүүлэх аргаа бататгах.', instruction: 'Жишээг ажиглаад дараагийн гурван бодлогыг өөрөө бодоорой.' },
     { id: 'art', subject: 'Зургийн даалгавар', detail: 'Маргааш өгөх', tone: 'task-purple', goal: 'Өнгө ашиглан өөрийн санааг чөлөөтэй илэрхийлэх.', instruction: '“Миний дуртай улирал” сэдвээр жижиг зураг зураарай.' },
   ];
-  const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+  const [savedProgress] = useState(loadStudentProgress);
+  const [completedSteps, setCompletedSteps] = useState<string[]>(savedProgress.completedSteps);
   const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [answerState, setAnswerState] = useState<'idle' | 'correct' | 'incorrect'>('idle');
+  const [mongolianExerciseCorrect, setMongolianExerciseCorrect] = useState(savedProgress.mongolianExerciseCorrect);
   const progress = Math.round((completedSteps.length / learningSteps.length) * 100);
   const selectedStep = learningSteps.find((step) => step.id === selectedStepId);
   const mongolianAnswers = [
@@ -274,6 +296,13 @@ function StudentDashboard() {
     'Өнөөдөр тэнгэр цэлмэг байв.',
   ];
   const correctAnswer = mongolianAnswers[1];
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      STUDENT_PROGRESS_KEY,
+      JSON.stringify({ completedSteps, mongolianExerciseCorrect }),
+    );
+  }, [completedSteps, mongolianExerciseCorrect]);
 
   const toggleStep = (id: string) => {
     setCompletedSteps((current) =>
@@ -284,12 +313,14 @@ function StudentDashboard() {
   const openStep = (id: string) => {
     setSelectedStepId(id);
     setSelectedAnswer(null);
-    setAnswerState('idle');
+    setAnswerState(id === 'mongolian' && mongolianExerciseCorrect ? 'correct' : 'idle');
   };
 
   const checkAnswer = () => {
     if (!selectedAnswer) return;
-    setAnswerState(selectedAnswer === correctAnswer ? 'correct' : 'incorrect');
+    const isCorrect = selectedAnswer === correctAnswer;
+    setAnswerState(isCorrect ? 'correct' : 'incorrect');
+    if (isCorrect) setMongolianExerciseCorrect(true);
   };
 
   if (selectedStep) {
@@ -342,7 +373,7 @@ function StudentDashboard() {
                 );
               })}
             </fieldset>
-            {answerState === 'correct' && (
+            {(answerState === 'correct' || mongolianExerciseCorrect) && (
               <div className="answer-feedback is-correct" role="status">
                 <CheckCircle2 size={18} />
                 <div><strong>Зөв хариуллаа!</strong><p>Номин сургуульдаа баяртайгаар явсан нь эхийн гол санаа юм.</p></div>
@@ -354,7 +385,7 @@ function StudentDashboard() {
                 <div><strong>Дахин нэг оролдоорой</strong><p>Бүх эхэд юуны тухай өгүүлснийг бодоод өөр хариулт сонгоорой.</p></div>
               </div>
             )}
-            {answerState !== 'correct' && (
+            {answerState !== 'correct' && !mongolianExerciseCorrect && (
               <button
                 className="check-answer-button"
                 onClick={checkAnswer}
@@ -371,7 +402,7 @@ function StudentDashboard() {
             <p>Дараагийн хөгжүүлэлтээр дасгалын асуулт, хариултыг энд оруулна.</p>
           </div>
         )}
-        {(selectedStep.id !== 'mongolian' || answerState === 'correct' || isDone) && (
+        {(selectedStep.id !== 'mongolian' || answerState === 'correct' || mongolianExerciseCorrect || isDone) && (
           <button
             className={`lesson-complete-button ${isDone ? 'is-done' : ''}`}
             onClick={() => {
