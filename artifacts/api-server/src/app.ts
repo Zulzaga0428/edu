@@ -5,6 +5,17 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+const isProduction = process.env.NODE_ENV === "production";
+const allowedOrigins = (process.env.CORS_ORIGINS ?? "")
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
+if (isProduction && allowedOrigins.length === 0) {
+  throw new Error(
+    "CORS_ORIGINS is required in production and must contain the frontend origin.",
+  );
+}
 
 app.use(
   pinoHttp({
@@ -25,7 +36,19 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || !isProduction || allowedOrigins.includes(origin.replace(/\/+$/, ""))) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Origin is not allowed by CORS."));
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
