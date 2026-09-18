@@ -171,6 +171,206 @@ h1 { color: var(--ink); font-size: clamp(34px, 10vw, 47px); letter-spacing: -.06
 .lesson-complete-button { width: 100%; min-height: 53px; margin-top: 16px; border-radius: 16px; display: flex; align-items: center; justify-content: center; gap: 9px; background: #244f5b; color: #fff; font-size: 12px; font-weight: 800; box-shadow: 0 5px 0 #183f4b; }
 .lesson-complete-button.is-done { background: #5c947f; box-shadow: 0 5px 0 #477a67; }
 
+/* Assignment Styles */
+.teacher-assignments-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 28px 2px 12px;
+}
+.teacher-assignments-header h3 {
+  font-size: 15px;
+  margin: 0;
+  letter-spacing: -.02em;
+}
+.btn-add-assignment {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 800;
+  transition: all .16s ease;
+}
+.btn-add-assignment:hover {
+  background: #dfe8fc;
+}
+
+.create-assignment-form {
+  background: #fff;
+  border: 1px solid #e2eaf4;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 8px 24px rgba(47, 75, 105, 0.04);
+}
+.create-assignment-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.create-assignment-form label span {
+  font-size: 10px;
+  font-weight: 800;
+  color: #718297;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.create-assignment-form input,
+.create-assignment-form textarea,
+.create-assignment-form select {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e1e8f0;
+  background: #fbfdff;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .16s ease, background .16s ease;
+}
+.create-assignment-form input:focus,
+.create-assignment-form textarea:focus,
+.create-assignment-form select:focus {
+  border-color: #a7bef1;
+  background: #fff;
+}
+.create-assignment-form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.form-actions button {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-cancel {
+  background: #f1f4f8;
+  color: #6d7f92;
+}
+.btn-cancel:hover {
+  background: #e9ecef;
+}
+.btn-save {
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 4px 0 #365f9d;
+}
+.btn-save:disabled {
+  background: #c4cbd3;
+  box-shadow: 0 4px 0 #aeb6bf;
+  cursor: not-allowed;
+}
+.btn-save:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #365f9d;
+}
+
+.teacher-assignment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.teacher-assignment-empty {
+  padding: 24px;
+  text-align: center;
+  background: #fbfdff;
+  border: 1px dashed #d5e2f0;
+  border-radius: 16px;
+  color: #8b9baa;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.teacher-assignment-card {
+  background: #fff;
+  border: 1px solid #e4eaf2;
+  border-radius: 16px;
+  padding: 15px;
+}
+.assignment-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.assignment-header > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.assignment-header strong {
+  font-size: 13px;
+  color: var(--ink);
+}
+.assignment-header small {
+  font-size: 10px;
+  color: #8b9aaa;
+  margin-top: 2px;
+}
+.teacher-assignment-card > p {
+  margin: 12px 0 0;
+  font-size: 11px;
+  color: #5c6e80;
+  line-height: 1.5;
+  padding: 10px;
+  background: #f8fbfa;
+  border-radius: 10px;
+  border: 1px solid #eff3f6;
+}
+.status-badge {
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 800;
+}
+.status-done {
+  background: #e1f0e9;
+  color: #4f8c75;
+}
+.status-pending {
+  background: #fff0e0;
+  color: #c9794e;
+}
+.task-mint {
+  background: var(--mint);
+  color: #438e7b;
+}
+.truncate-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.animate-in {
+  animation: animate-in 0.25s ease-out forwards;
+}
+@keyframes animate-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes loading { 0% { transform: translateX(-100%); } 70%, 100% { transform: translateX(230%); } }
 @media (min-width: 650px) { .mobile-app { box-shadow: var(--shadow); min-height: 100vh; } .app-roles, .app-login { padding-left: 38px; padding-right: 38px; } }

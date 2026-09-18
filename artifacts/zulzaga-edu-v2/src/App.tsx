@@ -19,6 +19,61 @@ import {
 type Role = 'student' | 'parent' | 'teacher';
 type Screen = 'splash' | 'roles' | 'login' | 'dashboard';
 
+export type Assignment = {
+  id: string;
+  subject: string;
+  title: string;
+  instruction: string;
+  dueDate: string;
+  createdAt: number;
+  completed: boolean;
+};
+
+const ASSIGNMENTS_KEY = 'zulzaga-edu-assignments-v1';
+
+function loadAssignments(): Assignment[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const saved = localStorage.getItem(ASSIGNMENTS_KEY);
+    const parsed: unknown = saved ? JSON.parse(saved) : [];
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter(
+        (item): item is Record<string, unknown> =>
+          typeof item === 'object' && item !== null,
+      )
+      .filter(
+        (item) =>
+          typeof item.id === 'string' &&
+          typeof item.subject === 'string' &&
+          typeof item.instruction === 'string' &&
+          typeof item.dueDate === 'string',
+      )
+      .map((item) => ({
+        id: item.id as string,
+        subject: item.subject as string,
+        title:
+          typeof item.title === 'string' && item.title.trim()
+            ? item.title
+            : (item.subject as string),
+        instruction: item.instruction as string,
+        dueDate: item.dueDate as string,
+        createdAt:
+          typeof item.createdAt === 'number' ? item.createdAt : Date.now(),
+        completed: item.completed === true,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function saveAssignments(assignments: Assignment[]) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(ASSIGNMENTS_KEY, JSON.stringify(assignments));
+  }
+}
+
 const STUDENT_PROGRESS_KEY = 'zulzaga-edu-student-progress-v1';
 
 function loadStudentProgress() {
@@ -292,6 +347,19 @@ function StudentDashboard() {
   const [selectedMathAnswer, setSelectedMathAnswer] = useState<number | null>(null);
   const [mathAnswerState, setMathAnswerState] = useState<'idle' | 'correct' | 'incorrect'>('idle');
   const [mathExerciseCorrect, setMathExerciseCorrect] = useState(savedProgress.mathExerciseCorrect);
+
+  const [assignments, setAssignments] = useState<Assignment[]>(loadAssignments);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+
+  const toggleAssignment = (id: string) => {
+    const updated = assignments.map((assignment) =>
+      assignment.id === id
+        ? { ...assignment, completed: !assignment.completed }
+        : assignment,
+    );
+    setAssignments(updated);
+    saveAssignments(updated);
+  };
   const progress = Math.round((completedSteps.length / learningSteps.length) * 100);
   const selectedStep = learningSteps.find((step) => step.id === selectedStepId);
   const mongolianAnswers = [
@@ -335,6 +403,40 @@ function StudentDashboard() {
     setMathAnswerState(isCorrect ? 'correct' : 'incorrect');
     if (isCorrect) setMathExerciseCorrect(true);
   };
+
+  if (selectedAssignmentId) {
+    const assignment = assignments.find(a => a.id === selectedAssignmentId);
+    if (assignment) {
+      const isDone = assignment.completed;
+      return (
+        <div className="dashboard-content student-lesson-view">
+          <button className="lesson-back" onClick={() => setSelectedAssignmentId(null)}>
+            <ArrowLeft size={17} /> Өнөөдрийн ажлууд
+          </button>
+          <section className="lesson-detail-card task-blue">
+            <span className="lesson-subject">{assignment.subject}</span>
+            <h3>{assignment.title}</h3>
+            <p>Хугацаа: {assignment.dueDate}</p>
+          </section>
+          <section className="lesson-block">
+            <span className="lesson-block-number">1</span>
+            <div><small>ЗААВАР</small><p>{assignment.instruction}</p></div>
+          </section>
+          <button
+            className={`lesson-complete-button ${isDone ? 'is-done' : ''}`}
+            onClick={() => {
+              toggleAssignment(assignment.id);
+              setSelectedAssignmentId(null);
+            }}
+            data-testid={`button-complete-assignment-${assignment.id}`}
+          >
+            {isDone ? <CheckCircle2 size={18} /> : <Sparkles size={18} />}
+            {isDone ? 'Хийж дууссан (Буцах)' : 'Дууссан гэж тэмдэглэх'}
+          </button>
+        </div>
+      );
+    }
+  }
 
   if (selectedStep) {
     const isDone = completedSteps.includes(selectedStep.id);
@@ -495,6 +597,36 @@ function StudentDashboard() {
         <b>{progress}%</b>
         <div className="student-progress-track"><span style={{ width: `${progress}%` }} /></div>
       </div>
+      {assignments.length > 0 && (
+        <>
+          <div className="section-heading section-heading-spaced">
+            <h3>Багшийн даалгавар</h3>
+            <span>{assignments.filter(a => !a.completed).length} шинэ</span>
+          </div>
+          <div className="student-step-list" style={{ marginBottom: '28px' }}>
+            {assignments.map(assignment => (
+              <button
+                key={assignment.id}
+                className={`student-step ${assignment.completed ? 'is-complete' : ''}`}
+                onClick={() => setSelectedAssignmentId(assignment.id)}
+                aria-pressed={assignment.completed}
+                data-testid={`student-assignment-${assignment.id}`}
+              >
+                <span className={`task-icon ${assignment.completed ? 'task-mint' : 'task-blue'}`}>
+                  {assignment.completed ? <CheckCircle2 size={20} /> : <NotebookPen size={20} />}
+                </span>
+                <span className="student-step-copy">
+                  <strong>{assignment.title}</strong>
+                  <small>{assignment.subject} · {assignment.dueDate}</small>
+                  <small className="truncate-text">{assignment.instruction}</small>
+                </span>
+                <span className="step-state">{assignment.completed ? 'Дууссан' : 'Шинэ'}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       <div className="section-heading section-heading-spaced">
         <h3>Өнөөдрийн хийх зүйл</h3>
         <span>{learningSteps.length - completedSteps.length} үлдлээ</span>
@@ -551,6 +683,34 @@ function ParentDashboard() {
 }
 
 function TeacherDashboard() {
+  const [assignments, setAssignments] = useState<Assignment[]>(loadAssignments);
+  const [isCreating, setIsCreating] = useState(false);
+  const [subject, setSubject] = useState('Монгол хэл');
+  const [title, setTitle] = useState('');
+  const [instruction, setInstruction] = useState('');
+  const [dueDate, setDueDate] = useState('Маргааш');
+
+  const handleCreateAssignment = () => {
+    if (!title.trim() || !instruction.trim()) return;
+    const newAssignment: Assignment = {
+      id: Date.now().toString(),
+      subject,
+      title: title.trim(),
+      instruction: instruction.trim(),
+      dueDate,
+      createdAt: Date.now(),
+      completed: false,
+    };
+    const updated = [newAssignment, ...assignments];
+    setAssignments(updated);
+    saveAssignments(updated);
+    setIsCreating(false);
+    setTitle('');
+    setInstruction('');
+    setSubject('Монгол хэл');
+    setDueDate('Маргааш');
+  };
+
   return (
     <div className="dashboard-content">
       <div className="teacher-summary">
@@ -568,6 +728,92 @@ function TeacherDashboard() {
         <div><strong>Тэмүүлэнг дэмжих</strong><p>Монгол хэлний 2 даалгавар хоцорсон байна.</p></div>
         <ChevronRight size={18} />
       </button>
+
+      <div className="teacher-assignments-header">
+        <h3>Багшийн даалгавар</h3>
+        {!isCreating && (
+          <button className="btn-add-assignment" onClick={() => setIsCreating(true)} data-testid="button-add-assignment">
+            <Sparkles size={13} /> Нэмэх
+          </button>
+        )}
+      </div>
+
+      {isCreating && (
+        <div className="create-assignment-form animate-in">
+          <label>
+            <span>Хичээлийн нэр</span>
+            <select value={subject} onChange={e => setSubject(e.target.value)} data-testid="select-assignment-subject">
+              <option value="Монгол хэл">Монгол хэл</option>
+              <option value="Математик">Математик</option>
+              <option value="Хүн ба орчин">Хүн ба орчин</option>
+              <option value="Зураг урлал">Зураг урлал</option>
+              <option value="Бусад">Бусад</option>
+            </select>
+          </label>
+          <label>
+            <span>Даалгаврын нэр</span>
+            <input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Жишээ: Миний дуртай ном"
+              data-testid="input-assignment-title"
+            />
+          </label>
+          <label>
+            <span>Даалгаврын заавар</span>
+            <textarea
+              value={instruction}
+              onChange={e => setInstruction(e.target.value)}
+              placeholder="Юу хийх талаар дэлгэрэнгүй бичнэ үү..."
+              data-testid="input-assignment-instruction"
+            />
+          </label>
+          <label>
+            <span>Хугацаа</span>
+            <select value={dueDate} onChange={e => setDueDate(e.target.value)} data-testid="select-assignment-due">
+              <option value="Өнөөдөр">Өнөөдөр</option>
+              <option value="Маргааш">Маргааш</option>
+              <option value="Ирэх долоо хоногт">Ирэх долоо хоногт</option>
+            </select>
+          </label>
+          <div className="form-actions">
+            <button className="btn-cancel" onClick={() => setIsCreating(false)} data-testid="button-cancel-assignment">
+              Болих
+            </button>
+            <button className="btn-save" onClick={handleCreateAssignment} disabled={!title.trim() || !instruction.trim()} data-testid="button-save-assignment">
+              Хадгалах <ArrowRight size={15}/>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {assignments.length === 0 && !isCreating ? (
+        <div className="teacher-assignment-empty" data-testid="empty-assignments">
+          <NotebookPen size={32} opacity={0.5} />
+          <span>Одоогоор шинэ даалгавар өгөөгүй байна.</span>
+        </div>
+      ) : (
+        <div className="teacher-assignment-list" data-testid="list-assignments">
+          {assignments.map(a => (
+            <div key={a.id} className="teacher-assignment-card">
+              <div className="assignment-header">
+                <span className={`task-icon ${a.completed ? 'task-mint' : 'task-blue'}`}>
+                  {a.completed ? <CheckCircle2 size={18}/> : <NotebookPen size={18}/>}
+                </span>
+                <div>
+                   <strong>{a.title}</strong>
+                   <small>{a.subject} · Хугацаа: {a.dueDate}</small>
+                </div>
+                <span className={`status-badge ${a.completed ? 'status-done' : 'status-pending'}`}>
+                  {a.completed ? 'Хийсэн' : 'Хүлээгдэж буй'}
+                </span>
+              </div>
+              <p>{a.instruction}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="section-heading section-heading-spaced"><h3>Өнөөдрийн ажлууд</h3><span>Бүгдийг харах</span></div>
       <div className="teacher-task"><span className="task-icon task-blue"><NotebookPen size={20} /></span><div><strong>Даалгавар шалгах</strong><p>8 сурагч илгээсэн байна</p></div><span className="count-badge">8</span></div>
       <div className="teacher-task"><span className="task-icon task-yellow"><MessageCircle size={20} /></span><div><strong>Шинэ мессеж</strong><p>Эцэг эхээс 2 шинэ асуулт</p></div><span className="count-badge">2</span></div>
