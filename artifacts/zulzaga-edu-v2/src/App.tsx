@@ -257,18 +257,55 @@ function Dashboard({ role, onBack }: { role: Role; onBack: () => void }) {
 }
 
 function StudentDashboard() {
+  const learningSteps = [
+    { id: 'mongolian', subject: 'Монгол хэл', detail: 'Өгүүлбэрийн бүтэц · 20 минут', tone: 'task-blue' },
+    { id: 'math', subject: 'Математик', detail: 'Үржих үйлдэл · 15 минут', tone: 'task-yellow' },
+    { id: 'art', subject: 'Зургийн даалгавар', detail: 'Маргааш өгөх', tone: 'task-purple' },
+  ];
+  const [completedSteps, setCompletedSteps] = useState<string[]>(['mongolian']);
+  const progress = Math.round((completedSteps.length / learningSteps.length) * 100);
+
+  const toggleStep = (id: string) => {
+    setCompletedSteps((current) =>
+      current.includes(id) ? current.filter((step) => step !== id) : [...current, id],
+    );
+  };
+
   return (
     <div className="dashboard-content">
-      <div className="section-heading"><h3>Дараагийн хийх зүйл</h3><span>2 үлдлээ</span></div>
-      <div className="task-card task-card-main">
-        <span className="task-icon task-blue"><BookOpen size={21} /></span>
-        <div><strong>Монгол хэл</strong><p>Өгүүлбэрийн бүтэц · 20 минут</p></div>
-        <ChevronRight size={18} />
+      <div className="student-daily-progress">
+        <div>
+          <span>Өнөөдрийн төлөвлөгөө</span>
+          <strong>{completedSteps.length} / {learningSteps.length} ажил дууссан</strong>
+        </div>
+        <b>{progress}%</b>
+        <div className="student-progress-track"><span style={{ width: `${progress}%` }} /></div>
       </div>
-      <div className="task-card">
-        <span className="task-icon task-yellow"><NotebookPen size={20} /></span>
-        <div><strong>Зургийн даалгавар</strong><p>Маргааш өгөх</p></div>
-        <ChevronRight size={18} />
+      <div className="section-heading section-heading-spaced">
+        <h3>Өнөөдрийн хийх зүйл</h3>
+        <span>{learningSteps.length - completedSteps.length} үлдлээ</span>
+      </div>
+      <div className="student-step-list">
+        {learningSteps.map((step, index) => {
+          const isDone = completedSteps.includes(step.id);
+          return (
+            <button
+              key={step.id}
+              className={`student-step ${isDone ? 'is-complete' : ''}`}
+              onClick={() => toggleStep(step.id)}
+              aria-pressed={isDone}
+            >
+              <span className={`task-icon ${step.tone}`}>
+                {isDone ? <CheckCircle2 size={20} /> : index === 0 ? <BookOpen size={20} /> : <NotebookPen size={20} />}
+              </span>
+              <span className="student-step-copy">
+                <strong>{step.subject}</strong>
+                <small>{step.detail}</small>
+              </span>
+              <span className="step-state">{isDone ? 'Дууссан' : 'Хийх'}</span>
+            </button>
+          );
+        })}
       </div>
       <div className="section-heading section-heading-spaced"><h3>Миний ахиц</h3><span>Энэ 7 хоног</span></div>
       <div className="progress-card">
