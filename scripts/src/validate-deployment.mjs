@@ -108,10 +108,27 @@ async function waitForLocalHealth(baseUrl, apiProcess) {
   fail("/api/healthz did not return 200 within 15 seconds.");
 }
 
+async function fetchWithRetry(url, options) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    try {
+      return await fetch(url, options);
+    } catch (error) {
+      lastError = error;
+      if (attempt < 5) {
+        await new Promise((resolve) => setTimeout(resolve, 1_000));
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 async function checkHealth(baseUrl, label) {
   let response;
   try {
-    response = await fetch(`${baseUrl}/api/healthz`);
+    response = await fetchWithRetry(`${baseUrl}/api/healthz`);
   } catch (error) {
     fail(`${label} /api/healthz could not be reached: ${error.message}`);
   }
@@ -124,7 +141,7 @@ async function checkHealth(baseUrl, label) {
 async function checkCors(baseUrl, label) {
   let allowedResponse;
   try {
-    allowedResponse = await fetch(`${baseUrl}/api/healthz`, {
+    allowedResponse = await fetchWithRetry(`${baseUrl}/api/healthz`, {
       method: "OPTIONS",
       headers: {
         Origin: frontendOrigin,
@@ -145,7 +162,7 @@ async function checkCors(baseUrl, label) {
 
   let rejectedResponse;
   try {
-    rejectedResponse = await fetch(`${baseUrl}/api/healthz`, {
+    rejectedResponse = await fetchWithRetry(`${baseUrl}/api/healthz`, {
       method: "OPTIONS",
       headers: {
         Origin: unrelatedOrigin,
