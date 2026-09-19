@@ -1,1 +1,2 @@
 - [Zulzaga EDU product direction](zulzaga-edu-direction.md) — build PWA-first, defer provider-specific auth implementation, and keep location out of the current product scope.
+- [Railway browser API access](railway-browser-api.md) — keep the API independently deployed; browser access uses a public domain restricted to the frontend origin.
